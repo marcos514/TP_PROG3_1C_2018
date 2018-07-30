@@ -1,17 +1,17 @@
 <?php
 
 abstract class SectoresMesa {
-    const BarraDeTragos = 0;
-    const BarraDeCervezas = 1;
-    const Cocina = 2;
-    const CandyBar = 3;
+    const BarraDeTragos = 1;
+    const BarraDeCervezas = 2;
+    const Cocina = 3;
+    const CandyBar = 4;
 }
 
 abstract class EstadosMesa {
-    const Comiendo = 0;
-    const Esperando = 1;
-    const Pagando = 2;
-    const Cerrada = 3;
+    const Comiendo = 1;
+    const Esperando = 2;
+    const Pagando = 3;
+    const Cerrada = 4;
 }
 
 class Mesa {

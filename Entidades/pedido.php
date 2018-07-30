@@ -1,10 +1,10 @@
 <?php
 
 abstract class Estados {
-    const EnPreparacion = 0;
-    const ListoParaServir = 1;
-    const Cancelado = 2;
-    const Entregado = 3;
+    const EnPreparacion = 1;
+    const ListoParaServir = 2;
+    const Cancelado = 3;
+    const Entregado = 4;
 }
 
 class Pedido {
