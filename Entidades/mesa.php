@@ -24,7 +24,7 @@ class Mesa {
         $objetoAccesoDato = AccesoDatos::dameUnObjetoAcceso(); 
 		$consulta = $objetoAccesoDato->RetornarConsulta("INSERT into mesas (sector,estado)values(:sector,:estado)");
 		$consulta->bindValue(':sector', $this->sector, PDO::PARAM_INT);
-		$consulta->bindValue(':estado', $this->estado, PDO::PARAM_STR);
+		$consulta->bindValue(':estado', $this->estado, PDO::PARAM_INT);
 		$consulta->execute();		
 		return $objetoAccesoDato->RetornarUltimoIdInsertado();
     }
@@ -42,7 +42,7 @@ class Mesa {
 		$consulta = $objetoAccesoDato->RetornarConsulta("UPDATE mesas set sector=:sector, estado=:estado WHERE id=:id");
         $consulta->bindValue(':id', $this->id, PDO::PARAM_INT);
         $consulta->bindValue(':sector',$this->sector, PDO::PARAM_INT);
-		$consulta->bindValue(':estado', $this->estado, PDO::PARAM_STR);
+		$consulta->bindValue(':estado', $this->estado, PDO::PARAM_INT);
 		return $consulta->execute();
     }
 
@@ -53,8 +53,16 @@ class Mesa {
         return $consulta->fetchAll(PDO::FETCH_CLASS, "Mesa");
     }
 
+    public static function TraerMesaConId($id) {
+		$objetoAccesoDato = AccesoDatos::dameUnObjetoAcceso(); 
+		$consulta =$objetoAccesoDato->RetornarConsulta("SELECT * from mesas where id = $id");
+		$consulta->execute();
+		$mesa = $consulta->fetchObject('Mesa');
+		return $mesa;
+    }
+
     public function mostrarDatosDeLaMesa() {
-	  	return "Mesa Numero: ".$this->id." - Estado: ".$this->cantante." - Pedido numero:  ".$this->año;
+	  	return "Mesa Numero: ".$this->id." - Estado: ".$this->estado." - Sector:  ".$this->sector;
     }
 }
 
