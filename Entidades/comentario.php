@@ -34,6 +34,21 @@ class Comentario {
         $consulta->bindValue(':idmesa', $this->idMesa, PDO::PARAM_INT);
         return $consulta->execute();
     }
+
+    public static function TraerTodosLosComentarios() {
+        $objetoAccesoDato = AccesoDatos::dameUnObjetoAcceso(); 
+	    $consulta = $objetoAccesoDato->RetornarConsulta("SELECT * from comentarios");
+	    $consulta->execute();			
+        return $consulta->fetchAll(PDO::FETCH_CLASS, "Comentario");
+    }
+
+    public static function TraerComentarioConId($id) {
+		$objetoAccesoDato = AccesoDatos::dameUnObjetoAcceso(); 
+		$consulta =$objetoAccesoDato->RetornarConsulta("SELECT * from comentarios where id = $id");
+		$consulta->execute();
+		$comentario = $consulta->fetchObject('Comentario');
+		return $comentario;
+    }
 }
 
 ?>

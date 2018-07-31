@@ -45,6 +45,21 @@ class Personal {
         $consulta->bindValue(':estado', $this->estado, PDO::PARAM_INT);
         return $consulta->execute();
     }
+
+    public static function TraerTodosLosEmpleados() {
+        $objetoAccesoDato = AccesoDatos::dameUnObjetoAcceso(); 
+	    $consulta = $objetoAccesoDato->RetornarConsulta("SELECT * from personal");
+	    $consulta->execute();			
+        return $consulta->fetchAll(PDO::FETCH_CLASS, "Personal");
+    }
+
+    public static function TraerEmpleadoConId($id) {
+		$objetoAccesoDato = AccesoDatos::dameUnObjetoAcceso(); 
+		$consulta =$objetoAccesoDato->RetornarConsulta("SELECT * from personal where id = $id");
+		$consulta->execute();
+		$personal = $consulta->fetchObject('Personal');
+		return $personal;
+    }
 }
 
 ?>

@@ -4,9 +4,8 @@ require_once "Entidades/factura.php";
 require_once "Entidades/items.php";
 require_once "Entidades/pedido.php";
 require_once "Entidades/comentario.php";
-require_once "Interfaces/IApiMesa.php";
 
-class MesaApi extends Mesa implements IApiMesa {
+class MesaApi extends Mesa {
 
     public function InsertarLaMesa($request, $response, $args) {
 
@@ -38,6 +37,30 @@ class MesaApi extends Mesa implements IApiMesa {
             $objDelaRespuesta->respuesta = "Se necesita especificar el sector( Cocina / BarraDeTragos / BarraDeCervezas / CandyBar )";
         }
         
+        return $response->withJson($objDelaRespuesta, 200);
+    }
+
+    public function BorrarMesa($request, $response, $args) {
+
+        $objDelaRespuesta= new stdclass();
+        $ArrayDeParametros = $request->getParsedBody();
+        $mesa = $ArrayDeParametros['mesa'];
+        $miMesa = Mesa::TraerMesaConId($mesa);
+        $objDelaRespuesta->respuesta = $miMesa->BajaDeMesa();
+        return $response->withJson($objDelaRespuesta, 200);
+    }
+
+    public function ModificarMesa($request, $response, $args) {
+
+        $objDelaRespuesta= new stdclass();
+        $ArrayDeParametros = $request->getParsedBody();
+        $mesa = $ArrayDeParametros['mesa'];
+        $sector = $ArrayDeParametros['sector'];
+        $estado = $ArrayDeParametros['estado'];
+        $miMesa = Mesa::TraerMesaConId($mesa);
+        $miMesa->sector = $sector;
+        $miMesa->estado = $estado;
+        $objDelaRespuesta->respuesta = $miMesa->ModificarMesa();
         return $response->withJson($objDelaRespuesta, 200);
     }
 
@@ -120,8 +143,7 @@ class MesaApi extends Mesa implements IApiMesa {
             $respuesta = ($miMesa->ModificacionDeMesa() . $respuesta); 
             $objDelaRespuesta->respuesta = "Pedido entregado: $codigo";    
         } else {
-            $respuesta = $miPedido->mostrarDatosDelPedido();
-            $objDelaRespuesta->respuesta = "Se necesita especificar un pedido (Valido) $respuesta";
+            $objDelaRespuesta->respuesta = "Se necesita especificar un pedido (Valido)";
         }
 
         return $response->withJson($objDelaRespuesta, 200);
@@ -137,7 +159,6 @@ class MesaApi extends Mesa implements IApiMesa {
         $miPedido->estado = Estados::Cancelado;
 
         if($miPedido->id != "") {
-            $miPedido->ModificacionDePedido();
             $objDelaRespuesta->respuesta = "Pedido cancelado";    
         } else {
             $objDelaRespuesta->respuesta = "Se necesita especificar una pedido (Valido)";
@@ -176,7 +197,55 @@ class MesaApi extends Mesa implements IApiMesa {
         return $response->withJson($objDelaRespuesta, 200);
     }
 
-    public function Factura($request, $response, $args) {
+    public function AgregarComentario($request, $response, $args) {
+
+        $objDelaRespuesta= new stdclass();
+        $ArrayDeParametros = $request->getParsedBody();
+        $puntaje = $ArrayDeParametros['puntaje'];
+        $descripcion = $ArrayDeParametros['descripcion'];
+        $idmesa = $ArrayDeParametros['idmesa'];
+        
+        $miComentario = new Comentario();
+        $miComentario->puntaje = $puntaje;
+        $miComentario->descripcion = $descripcion;
+        $miComentario->idmesa = $idmesa;
+        $respuesta = $items->AltaDeComentario();
+        $objDelaRespuesta->respuesta = "Se inserto el comentario con id: $respuesta";
+        return $response->withJson($objDelaRespuesta, 200);
+    }
+
+    public function ModificarComentario($request, $response, $args) {
+
+        $objDelaRespuesta= new stdclass();
+        $ArrayDeParametros = $request->getParsedBody();
+        $id = $ArrayDeParametros['id'];
+        $puntaje = $ArrayDeParametros['puntaje'];
+        $descripcion = $ArrayDeParametros['descripcion'];
+        $idmesa = $ArrayDeParametros['idmesa'];
+
+        $miPedido = Pedido::TraerComentarioConId($id);
+        $miPedido->puntaje = $puntaje;
+        $miPedido->descripcion = $descripcion;
+        $miPedido->idmesa = $idmesa;
+
+        $objDelaRespuesta->respuesta = $miPedido->ModificacionDeComentario();
+
+        return $response->withJson($objDelaRespuesta, 200);
+    }
+
+    public function BorrarComentario($request, $response, $args) {
+        
+        $objDelaRespuesta= new stdclass();
+        $ArrayDeParametros = $request->getParsedBody();
+        $id = $ArrayDeParametros['id'];
+
+        $miPedido = Pedido::TraerComentarioConId($id);
+        $objDelaRespuesta->respuesta = $miPedido->BajaDeComentario();
+
+        return $response->withJson($objDelaRespuesta, 200);
+    }
+
+    public function Facturar($request, $response, $args) {
 
         $objDelaRespuesta= new stdclass();
         $ArrayDeParametros = $request->getParsedBody();
@@ -190,9 +259,80 @@ class MesaApi extends Mesa implements IApiMesa {
         $nuevaFactura->idpedido = $pedido;
         $nuevaFactura->idmesa = $mesa;
         $nuevaFactura->importe = $importe;
+        
+        $miMesa = Mesa::TraerMesaConId($mesa);
+        $miMesa->estado = EstadosMesa::Pagando;
 
-        $respuesta = $nuevaFactura->AltaDeFactura();
-        $objDelaRespuesta->respuesta = "Se insertaron la factura con id: $respuesta";
+        if($mesa != NULL && $responsable != NULL  && $pedido != NULL && $importe != NULL && $miMesa->id != "" ) {
+            $respuesta = $nuevaFactura->AltaDeFactura();
+            $respuesta = ($miMesa->ModificacionDeMesa() . $respuesta); 
+            $objDelaRespuesta->respuesta = "Se insertaron la factura con id: $respuesta"; 
+        } else {
+            $objDelaRespuesta->respuesta = "Se necesita especificar un los parametros (Responsable, Mesa, Pedido, Importe)";
+        }
+        return $response->withJson($objDelaRespuesta, 200);
+    }
+
+    public function CerrarMesa($request, $response, $args) {
+
+        $objDelaRespuesta= new stdclass();
+        $ArrayDeParametros = $request->getParsedBody();
+        $mesa = $ArrayDeParametros['mesa'];
+        $miMesa = Mesa::TraerMesaConId($mesa);
+        $miMesa->estado = EstadosMesa::Cerrada;
+
+        if($mesa != NULL && $miMesa->id != "" ) {
+            $respuesta = $miMesa->ModificacionDeMesa();
+            $objDelaRespuesta->respuesta = "Se cerro la mesa numero: $mesa"; 
+        } else {
+            $objDelaRespuesta->respuesta = "Se necesita especificar un numero de mesa valido";
+        }
+
+        return $response->withJson($objDelaRespuesta, 200);
+    }
+
+    public function BorrarPedido($request, $response, $args) {
+        
+        $objDelaRespuesta= new stdclass();
+        $ArrayDeParametros = $request->getParsedBody();
+        $codigo = $ArrayDeParametros['codigo'];
+
+        $miPedido = Pedido::TraerPedidoConCodigo($codigo);
+        $objDelaRespuesta->respuesta = $miPedido->BajaDePedido();
+
+        return $response->withJson($objDelaRespuesta, 200);
+    }
+
+    public function ModificarPedido($request, $response, $args) {
+        
+        $objDelaRespuesta= new stdclass();
+        $ArrayDeParametros = $request->getParsedBody();
+        $estado = $ArrayDeParametros['estado'];
+        $tiempoestimado = $ArrayDeParametros['tiempoestimado'];
+        $tiempoentrega = $ArrayDeParametros['tiempoentrega'];
+        $codigo = $ArrayDeParametros['codigo'];
+        $idmesa = $ArrayDeParametros['idmesa'];
+        $foto = $ArrayDeParametros['foto'];
+
+        $miPedido = Pedido::TraerPedidoConCodigo($codigo);
+        $miPedido->estado = $estado;
+        $miPedido->tiempoestimado = $tiempoestimado;
+        $miPedido->tiempoentrega = $tiempoentrega;
+        $miPedido->idmesa = $idmesa;
+        $miPedido->foto = $foto;
+        $objDelaRespuesta->respuesta = $miPedido->ModificacionDePedido();
+
+        return $response->withJson($objDelaRespuesta, 200);
+    }
+
+    public function TraerPedidos($request, $response, $args) {
+
+        $objDelaRespuesta= new stdclass();
+        $pedidos = Pedido::TraerTodosLosPedidos();
+        foreach($pedidos as $aux) {
+            $respuesta = $respuesta . $aux->mostrarDatosDelPedido() . "<br>";
+        }
+        $objDelaRespuesta->respuesta = $respuesta;
         return $response->withJson($objDelaRespuesta, 200);
     }
 }
